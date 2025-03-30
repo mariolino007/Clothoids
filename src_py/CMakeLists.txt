@@ -42,15 +42,23 @@ set(G2LIB_SOURCES
 
 pybind11_add_module(${PROJECT_NAME} MODULE ${G2LIB_SOURCES})
 
-# Configurazione specifica per Windows
+# Aggiungi questa riga dopo pybind11_add_module
+target_sources(${PROJECT_NAME} PRIVATE exports.def)
+
+# Modifica la sezione Windows
 if(WIN32)
     target_compile_definitions(${PROJECT_NAME} PRIVATE
         _USE_MATH_DEFINES
         NOMINMAX
         Py_ENABLE_SHARED=1
+        Py_LIMITED_API=0
     )
     target_link_options(${PROJECT_NAME} PRIVATE
-        "/EXPORT:PyInit_G2lib"
+        "/DEF:${CMAKE_CURRENT_SOURCE_DIR}/exports.def"
+    )
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/Release"
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/Release"
     )
 endif()
 

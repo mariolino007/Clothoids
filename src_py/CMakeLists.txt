@@ -18,6 +18,9 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Release)
 
 project(G2lib VERSION 1.0)
 
+# Aggiungi qui l'opzione per i binding Python
+option(BUILD_PYTHON_BINDINGS "Build Python bindings" ON)
+
 find_package(pybind11 REQUIRED
   HINTS ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/pybind11/share/cmake)
 find_package(PkgConfig)

@@ -1,0 +1,49 @@
+name: Build Python Wrapper on Windows
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install CMake
+        uses: lukka/get-cmake@v3
+
+      - name: Get Python executable path
+        id: python_exe
+        shell: cmd
+        run: |
+          for /f "delims=" %%i in ('where python') do (set PYTHON_PATH=%%i)
+          echo PYTHON_PATH=%PYTHON_PATH%
+          echo PYTHON_PATH=%PYTHON_PATH%>>%GITHUB_ENV%
+
+      - name: Build pybind11
+        shell: cmd
+        run: |
+          git clone https://github.com/pybind/pybind11.git
+          cd pybind11
+          mkdir build
+          cd build
+          cmake -DPYTHON_EXECUTABLE=%PYTHON_PATH% ..
+          cmake --build . --config Release
+
+      - name: Build Python Wrapper
+        shell: cmd
+        run: |
+          cd src_py
+          mkdir build
+          cd build
+          cmake -DPYTHON_EXECUTABLE=%PYTHON_PATH% ..
+          cmake --build . --config Release

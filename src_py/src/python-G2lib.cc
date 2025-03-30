@@ -20,15 +20,8 @@ namespace py = pybind11;
 using namespace G2lib;
 using namespace G2lib::python;
 
-// Export esplicito per MSVC
-#ifdef _MSC_VER
-    #define EXPORT_SYMBOL __declspec(dllexport)
-#else
-    #define EXPORT_SYMBOL
-#endif
-
-// Versione modificata per garantire l'export corretto
-EXPORT_SYMBOL PYBIND11_MODULE(G2lib, m) {
+// Rimuovi la macro EXPORT_SYMBOL e usa direttamente PYBIND11_MODULE
+PYBIND11_MODULE(G2lib, m) {
     // Wrap delle classi principali
     wrap_BaseCurve(m);
     wrap_AABBtree(m);
@@ -67,11 +60,11 @@ EXPORT_SYMBOL PYBIND11_MODULE(G2lib, m) {
                 self->solve(b_, x_);
                 return std::make_tuple(x_[0], x_[1]);
             });
-
-    // Fix finale per MSVC: export esplicito dell'entry point
-    #ifdef _MSC_VER
-    extern "C" __declspec(dllexport) PyObject* PyInit_G2lib(void) {
-        return m.ptr();
-    }
-    #endif
 }
+
+// Export esplicito SOLO per MSVC usando la sintassi corretta
+#ifdef _MSC_VER
+extern "C" __declspec(dllexport) PyObject* PyInit_G2lib(void) {
+    return PyModule_Create(&PyModuleDef_G2lib);
+}
+#endif

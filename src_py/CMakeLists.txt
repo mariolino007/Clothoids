@@ -12,13 +12,14 @@ set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE)
 set(CMAKE_VERBOSE_MAKEFILE TRUE)
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
+# Configurazione directory di output
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Release)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Release)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Release)
 
 project(G2lib VERSION 1.0)
 
-# Aggiungi qui l'opzione per i binding Python
+# Opzione per abilitare i binding Python
 option(BUILD_PYTHON_BINDINGS "Build Python bindings" ON)
 
 find_package(pybind11 REQUIRED
@@ -33,66 +34,63 @@ endif()
 include(./CMakeLists-Flags.txt)
 add_subdirectory(../src Clothoids)
 
-set(G2LIB_SOURCES
-	"src/python-Triangle2D.cc"
-	"src/python-LineSegment.cc"
-	"src/python-G2lib.cc"
-	"src/python-Clothoid.cc"
-	"src/python-CircleArc.cc"
-	"src/python-Biarc.cc"
-	"src/python-BaseCurve.cc"
-	"src/python-AABBtree.cc"
-  "src/python-ClothoidSpline-Solver.cc"
-  "src/python-ClothoidSpline-LMSolver.cc"
-  "src/python-ClothoidSpline-IpoptSolver.cc"
-  "src/python-ClothoidSpline-Interpolation.cc")
+if(BUILD_PYTHON_BINDINGS)
+    # Configurazione binding Python
+    set(G2LIB_SOURCES
+        "src/python-Triangle2D.cc"
+        "src/python-LineSegment.cc"
+        "src/python-G2lib.cc"
+        "src/python-Clothoid.cc"
+        "src/python-CircleArc.cc"
+        "src/python-Biarc.cc"
+        "src/python-BaseCurve.cc"
+        "src/python-AABBtree.cc"
+        "src/python-ClothoidSpline-Solver.cc"
+        "src/python-ClothoidSpline-LMSolver.cc"
+        "src/python-ClothoidSpline-IpoptSolver.cc"
+        "src/python-ClothoidSpline-Interpolation.cc")
 
-pybind11_add_module(${PROJECT_NAME} MODULE ${G2LIB_SOURCES})
+    pybind11_add_module(${PROJECT_NAME} MODULE ${G2LIB_SOURCES})
 
-# Aggiungi questa riga dopo pybind11_add_module
-target_sources(${PROJECT_NAME} PRIVATE exports.def)
+    # Configurazione specifica per Windows
+    if(WIN32)
+        target_sources(${PROJECT_NAME} PRIVATE exports.def)
+        target_compile_definitions(${PROJECT_NAME} PRIVATE
+            _USE_MATH_DEFINES
+            NOMINMAX
+            Py_ENABLE_SHARED=1
+            Py_LIMITED_API=0
+        )
+        target_link_options(${PROJECT_NAME} PRIVATE
+            "/DEF:${CMAKE_CURRENT_SOURCE_DIR}/exports.def"
+        )
+    endif()
 
-# Modifica la sezione Windows
-if(WIN32)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE
-        _USE_MATH_DEFINES
-        NOMINMAX
-        Py_ENABLE_SHARED=1
-        Py_LIMITED_API=0
+    set_target_properties(${PROJECT_NAME} PROPERTIES 
+        OUTPUT_NAME "G2lib"
+        SUFFIX ".pyd"
+        PREFIX ""
+        ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/Release"
+        LIBRARY_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/Release"
+        RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/Release"
     )
-    target_link_options(${PROJECT_NAME} PRIVATE
-        "/DEF:${CMAKE_CURRENT_SOURCE_DIR}/exports.def"
-    )
-    set_target_properties(${PROJECT_NAME} PROPERTIES
-        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/Release"
-        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/Release"
-    )
-endif()
 
-set_target_properties(${PROJECT_NAME} PROPERTIES 
-    OUTPUT_NAME "G2lib"
-    SUFFIX ".pyd"
-    PREFIX ""
-)
+    target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
+    target_link_libraries(${PROJECT_NAME} PRIVATE ClothoidsStatic UtilsStatic QuarticStatic)
+    
+    if (ipopt_FOUND)
+        target_compile_definitions(${PROJECT_NAME} PRIVATE IPOPT_CLOTHOID_SPLINE)
+        target_include_directories(${PROJECT_NAME} PRIVATE ${ipopt_INCLUDE_DIRS})
+        target_link_libraries(${PROJECT_NAME} PRIVATE ${ipopt_LIBRARIES})
+        target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_CSTDDEF)
+    endif()
+    
+    if (TARGET Eigen3::Eigen)
+        target_compile_definitions(${PROJECT_NAME} PRIVATE LMSOLVE_CLOTHOID_SPLINE)
+        target_link_libraries(${PROJECT_NAME} PRIVATE Eigen3::Eigen)
+    endif()
+    
+    target_assign_flags(${PROJECT_NAME})
 
-target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
-target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_14)
-target_link_libraries(${PROJECT_NAME} PRIVATE ClothoidsStatic UtilsStatic QuarticStatic)
-if (ipopt_FOUND)
-  target_compile_definitions(${PROJECT_NAME} PRIVATE IPOPT_CLOTHOID_SPLINE)
-  target_include_directories(${PROJECT_NAME} PRIVATE ${ipopt_INCLUDE_DIRS})
-  target_link_libraries(${PROJECT_NAME} PRIVATE ${ipopt_LIBRARIES})
-  target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_CSTDDEF)
-endif()
-if (TARGET Eigen3::Eigen)
-  target_compile_definitions(${PROJECT_NAME} PRIVATE LMSOLVE_CLOTHOID_SPLINE)
-  target_link_libraries(${PROJECT_NAME} PRIVATE Eigen3::Eigen)
-endif()
-target_assign_flags(${PROJECT_NAME})
-
-# Aggiungi invece
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/Release"
-    LIBRARY_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/Release"
-    RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/Release"
-)
+endif() # Fine sezione BUILD_PYTHON_BINDINGS

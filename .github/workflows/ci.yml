@@ -1,50 +1,39 @@
-name: Build Python Wrapper on Windows
+name: Build Clothoids Wrapper
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
 
 jobs:
   build:
     runs-on: windows-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
-      - name: Setup Python 3.11
+      - name: Install Dependencies
+        run: |
+          choco install eigen -y --version 3.4.0
+          choco install cmake -y --installargs 'ADD_CMAKE_TO_PATH=System'
+
+      - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
-      - name: Install CMake
-        uses: lukka/get-cmake@v3
-
-      - name: Get Python executable path
-        id: python_exe
-        shell: cmd
+      - name: Configure and Build
+        shell: pwsh
         run: |
-          for /f "delims=" %%i in ('where python') do (set PYTHON_PATH=%%i)
-          echo PYTHON_PATH=%PYTHON_PATH%
-          echo PYTHON_PATH=%PYTHON_PATH%>>%GITHUB_ENV%
-
-      - name: Build pybind11
-        shell: cmd
-        run: |
-          git clone https://github.com/pybind/pybind11.git
-          cd pybind11
           mkdir build
           cd build
-          cmake -DPYTHON_EXECUTABLE=%PYTHON_PATH% ..
-          cmake --build . --config Release
+          cmake .. `
+            -Dpybind11_DIR="Submodules/pybind11" `
+            -DEigen3_DIR="C:/ProgramData/chocolatey/lib/eigen/tools/include/eigen3"
+          cmake --build . --config Release --target G2lib
 
-      - name: Build Python Wrapper
-        shell: cmd
-        run: |
-          cd src_py
-          mkdir build
-          cd build
-          cmake -DPYTHON_EXECUTABLE=%PYTHON_PATH% ..
-          cmake --build . --config Release
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: G2lib
+          path: build/src_py/Release/G2lib.*.pyd

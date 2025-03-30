@@ -21,7 +21,7 @@ jobs:
           choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=System'
           choco install -y ruby --version=3.0.2
           refreshenv
-          gem install colorize rubyzip  # Aggiunto rubyzip
+          gem install colorize rake
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v4
@@ -37,9 +37,9 @@ jobs:
           cmake .. `
             -G "Visual Studio 17 2022" -A x64 `
             -DPYTHON_EXECUTABLE="$env:pythonLocation\python.exe" `
-            -Dpybind11_DIR="$pwd/submodules/pybind11" `
-            -DBUILD_PYTHON_BINDINGS=ON  # Flag cruciale!
-          cmake --build . --config Release --target G2lib -- /m:4
+            -Dpybind11_DIR="$pwd/Submodules/pybind11" `
+            -DBUILD_PYTHON_BINDINGS=ON
+          cmake --build . --config Release --target ALL_BUILD -- /m:4
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4

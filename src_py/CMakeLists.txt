@@ -12,6 +12,10 @@ set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE)
 set(CMAKE_VERBOSE_MAKEFILE TRUE)
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Release)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Release)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Release)
+
 project(G2lib VERSION 1.0)
 
 find_package(pybind11 REQUIRED
@@ -24,7 +28,7 @@ if (PkgConfig_FOUND)
 endif()
 
 include(./CMakeLists-Flags.txt)
-add_subdirectory(.. Clothoids)
+add_subdirectory(../src Clothoids)
 
 set(G2LIB_SOURCES
 	"src/python-Triangle2D.cc"

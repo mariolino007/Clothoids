@@ -1,49 +1,45 @@
-name: Build Clothoids Wrapper
+name: Build Python Wrapper
 
-on:
-  workflow_dispatch:
-  push:
+on: [workflow_dispatch, push]
 
 jobs:
   build:
     runs-on: windows-latest
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          fetch-depth: 0
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
 
-      - name: Install Dependencies
-        shell: pwsh
-        run: |
-          choco install -y eigen --version=3.4.0
-          choco install -y cmake.install --installargs 'ADD_CMAKE_TO_PATH=System'
-          choco install -y ruby
-          refreshenv
-          gem install colorize
+    - name: Install dependencies
+      shell: pwsh
+      run: |
+        choco install -y eigen --version=3.4.0
+        choco install -y cmake.install --installargs 'ADD_CMAKE_TO_PATH=System'
 
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-          architecture: x64
+    - name: Setup Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        architecture: x64
 
-      - name: Configure and Build
-        shell: pwsh
-        run: |
-          cd src_py
-          mkdir build
-          cd build
-          cmake .. `
-            -Dpybind11_DIR="Submodules/pybind11" `
-            -DEigen3_DIR="C:/ProgramData/chocolatey/lib/eigen/tools/include/eigen3"
-          cmake --build . --config Release --target G2lib
+    - name: Configure and build
+      shell: pwsh
+      run: |
+        $pythonExe = "$env:pythonLocation\python.exe"
+        mkdir build
+        cd build
+        cmake .. `
+          -G "Visual Studio 17 2022" -A x64 `
+          -DPYTHON_EXECUTABLE="$pythonExe" `
+          -Dpybind11_DIR="$pwd/../submodules/pybind11"
+        cmake --build . --config Release --target G2lib
 
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: G2lib
-          path: |
-            build/Release/G2lib.pyd
-            build/Release/*.dll
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: python-module
+        path: |
+          build/Release/G2lib.pyd
+          build/Release/*.dll

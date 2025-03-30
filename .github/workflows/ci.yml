@@ -47,4 +47,5 @@ jobs:
           name: G2lib
           path: |
             build/Release/G2lib.pyd
-            build/Release/Clothoids_win_.dll
+            build/Release/*.dll
+            build/Release/*.lib

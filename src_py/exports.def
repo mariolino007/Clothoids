@@ -1,2 +1,3 @@
 EXPORTS
 PyInit_G2lib
+G2lib_Init

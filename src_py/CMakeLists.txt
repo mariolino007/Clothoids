@@ -42,6 +42,12 @@ set(G2LIB_SOURCES
 
 pybind11_add_module(${PROJECT_NAME} MODULE ${G2LIB_SOURCES})
 
+set_target_properties(${PROJECT_NAME} PROPERTIES 
+    OUTPUT_NAME "G2lib"
+    SUFFIX ".pyd"
+    PREFIX ""
+)
+
 target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_14)
 target_link_libraries(${PROJECT_NAME} PRIVATE ClothoidsStatic UtilsStatic QuarticStatic)

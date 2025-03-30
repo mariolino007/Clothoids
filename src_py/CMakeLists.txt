@@ -42,6 +42,18 @@ set(G2LIB_SOURCES
 
 pybind11_add_module(${PROJECT_NAME} MODULE ${G2LIB_SOURCES})
 
+# Configurazione specifica per Windows
+if(WIN32)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE
+        _USE_MATH_DEFINES
+        NOMINMAX
+        Py_ENABLE_SHARED=1
+    )
+    target_link_options(${PROJECT_NAME} PRIVATE
+        "/EXPORT:PyInit_G2lib"
+    )
+endif()
+
 set_target_properties(${PROJECT_NAME} PROPERTIES 
     OUTPUT_NAME "G2lib"
     SUFFIX ".pyd"
